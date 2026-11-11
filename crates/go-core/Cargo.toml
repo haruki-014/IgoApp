@@ -1,0 +1,9 @@
+[package]
+name = "go-core"
+description = "囲碁のルールエンジン(中国ルール・ポジショナルスーパーコウ)。I/O・非同期・DB に依存しない純粋なロジック。"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
