@@ -5,3 +5,10 @@ version = 4
 [[package]]
 name = "go-core"
 version = "0.1.0"
+
+[[package]]
+name = "go-engine"
+version = "0.1.0"
+dependencies = [
+ "go-core",
+]

@@ -1,0 +1,10 @@
+[package]
+name = "go-engine"
+description = "自作の囲碁思考エンジン。標準入出力で GTP を話す。"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+go-core = { path = "../go-core" }

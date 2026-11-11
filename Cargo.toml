@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/go-core"]
+members = ["crates/go-core", "crates/go-engine"]
 
 [workspace.package]
 version = "0.1.0"
