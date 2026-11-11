@@ -1,0 +1,1126 @@
+/* ───────────── 配色 ─────────────
+   ページ部分はライト / ダークの両方に対応する。盤と石の色はここでは変えない
+   (どちらのモードでも同じ質感にするため)。 */
+
+:root {
+  color-scheme: light;
+  --bg: #f3efe6;
+  --bg-elevated: #fcfaf5;
+  --bg-sunken: #e9e3d6;
+  --ink: #24211c;
+  --ink-soft: #625c50;
+  --line: #d8d0bf;
+  --line-strong: #b9af9a;
+  --accent: #a83d27;
+  --accent-ink: #fffaf3;
+  --accent-soft: #f4dfd6;
+  --focus: #1f5f96;
+  --danger: #a32222;
+  --shadow: 0 1px 2px rgba(60, 45, 20, 0.08), 0 6px 18px rgba(60, 45, 20, 0.08);
+  --board-shadow: 0 2px 0 #b98a45, 0 9px 0 #99702f, 0 10px 1px #6f4f1c, 0 22px 30px rgba(50, 32, 8, 0.32);
+
+  --font-serif: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', 'Noto Serif JP', 'Noto Serif CJK JP', serif;
+  --font-sans:
+    'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic', 'Noto Sans JP', 'Noto Sans CJK JP',
+    system-ui, sans-serif;
+  --radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #17181c;
+    --bg-elevated: #212329;
+    --bg-sunken: #111215;
+    --ink: #ece7db;
+    --ink-soft: #a9a394;
+    --line: #34373f;
+    --line-strong: #4c505b;
+    --accent: #e27a5f;
+    --accent-ink: #1d0f0a;
+    --accent-soft: #3a2620;
+    --focus: #7db7ea;
+    --danger: #f08a80;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 22px rgba(0, 0, 0, 0.35);
+    --board-shadow: 0 2px 0 #b98a45, 0 9px 0 #99702f, 0 10px 1px #4f3812, 0 24px 34px rgba(0, 0, 0, 0.6);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #17181c;
+  --bg-elevated: #212329;
+  --bg-sunken: #111215;
+  --ink: #ece7db;
+  --ink-soft: #a9a394;
+  --line: #34373f;
+  --line-strong: #4c505b;
+  --accent: #e27a5f;
+  --accent-ink: #1d0f0a;
+  --accent-soft: #3a2620;
+  --focus: #7db7ea;
+  --danger: #f08a80;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 22px rgba(0, 0, 0, 0.35);
+  --board-shadow: 0 2px 0 #b98a45, 0 9px 0 #99702f, 0 10px 1px #4f3812, 0 24px 34px rgba(0, 0, 0, 0.6);
+}
+
+/* ───────────── 土台 ───────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0;
+  line-height: 1.35;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+/* ───────────── ヘッダ ───────────── */
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 3.25rem;
+  padding: 0 max(1rem, env(safe-area-inset-left)) 0 max(1rem, env(safe-area-inset-right));
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-elevated);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 30%, #5c5e66 0, #33343a 20%, #17171a 58%, #040405 100%);
+  box-shadow:
+    0.55rem 0 0 -0.02rem #f1ede3,
+    0.55rem 0 0 0 #b7b0a0;
+  margin-right: 0.55rem;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+/* ───────────── 部品 ───────────── */
+
+.card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.1rem 1.2rem;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.4rem;
+  padding: 0.35rem 0.95rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.12s,
+    border-color 0.12s,
+    transform 0.05s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--ink-soft);
+  background: var(--bg-sunken);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.button-large {
+  min-height: 2.9rem;
+  padding: 0.5rem 1.3rem;
+  font-size: 1rem;
+}
+
+.button-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.button-primary:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  filter: brightness(1.08);
+}
+
+.button-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--bg-elevated);
+}
+
+.button-danger:hover:not(:disabled) {
+  background: var(--danger);
+  border-color: var(--danger);
+  filter: brightness(1.08);
+}
+
+.button-danger-quiet {
+  color: var(--danger);
+}
+
+.button-quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.field {
+  display: block;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.field-hint {
+  min-height: 1.2em;
+  margin-top: 0.3rem;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+select,
+input[type='text'] {
+  width: 100%;
+  min-height: 2.4rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  color: var(--ink);
+  font: inherit;
+}
+
+.notice {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-sunken);
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.notice-error {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: transparent;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.05rem 0.55rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-turn {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.badge-win {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.badge-thinking {
+  border-color: var(--line-strong);
+}
+
+.dots::after {
+  content: '…';
+  display: inline-block;
+  width: 1em;
+  overflow: hidden;
+  vertical-align: bottom;
+  animation: dots 1.2s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  from {
+    width: 0;
+  }
+  to {
+    width: 1.1em;
+  }
+}
+
+/* 文中の小さな石 */
+.stone-icon {
+  display: inline-block;
+  flex: none;
+  border-radius: 50%;
+  vertical-align: -0.15em;
+}
+
+.stone-icon-black {
+  background: radial-gradient(circle at 36% 30%, #5c5e66 0, #33343a 20%, #17171a 58%, #040405 100%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.stone-icon-white {
+  background: radial-gradient(circle at 38% 30%, #ffffff 0, #f7f4ed 48%, #e4dfd2 86%, #c6c0b0 100%);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+/* ───────────── ダイアログ ───────────── */
+
+.dialog {
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  color: var(--ink);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.dialog::backdrop {
+  background: rgba(15, 12, 8, 0.55);
+}
+
+.dialog-body {
+  padding: 1.3rem 1.4rem 1.2rem;
+}
+
+.dialog h2 {
+  font-size: 1.15rem;
+}
+
+.dialog-text {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.8rem 0 1.2rem;
+  color: var(--ink-soft);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+/* ───────────── トップ画面 ───────────── */
+
+.home {
+  width: min(44rem, 100%);
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.home-hero h1 {
+  font-size: clamp(1.8rem, 5vw, 2.5rem);
+  letter-spacing: 0.16em;
+}
+
+.home-hero p {
+  margin-top: 0.5rem;
+  color: var(--ink-soft);
+}
+
+.create-form {
+  display: grid;
+  gap: 1.3rem;
+  padding: 1.4rem 1.4rem 1.5rem;
+}
+
+.create-form h2,
+.recent h2 {
+  font-size: 1.15rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1.3rem 1.5rem;
+}
+
+.mode-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+  gap: 0.6rem;
+}
+
+.mode {
+  position: relative;
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    background-color 0.12s;
+}
+
+.mode input,
+.segment input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mode:hover {
+  border-color: var(--ink-soft);
+}
+
+.mode-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.mode:has(input:focus-visible),
+.segment:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.mode-title {
+  font-weight: 700;
+}
+
+.mode-text {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.segment {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.4rem;
+  padding: 0.3rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-right: 1px solid var(--line-strong);
+}
+
+.segment:last-child {
+  border-right: 0;
+}
+
+.segment:hover {
+  background: var(--bg-sunken);
+}
+
+.segment-selected,
+.segment-selected:hover {
+  background: var(--ink);
+  color: var(--bg-elevated);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.stepper .button {
+  min-width: 2.4rem;
+  padding-inline: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.stepper .button-quiet {
+  font-size: 0.82rem;
+}
+
+.stepper output {
+  min-width: 5.2rem;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.recent ul {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+}
+
+.recent li + li {
+  border-top: 1px solid var(--line);
+}
+
+.recent a {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0.2rem;
+  text-decoration: none;
+}
+
+.recent a:hover .recent-title {
+  text-decoration: underline;
+}
+
+.recent time {
+  flex: none;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.message-page {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  padding: 5rem 1rem;
+  text-align: center;
+}
+
+.loading {
+  color: var(--ink-soft);
+}
+
+/* ───────────── 対局画面 ───────────── */
+
+.game {
+  --board-max: calc(100dvh - 6.6rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+  padding: 0.8rem max(0.6rem, env(safe-area-inset-right)) 3rem max(0.6rem, env(safe-area-inset-left));
+  max-width: 76rem;
+  margin: 0 auto;
+}
+
+.game-board {
+  position: relative;
+  /* 盤が画面に収まるように、幅と高さの小さいほうに合わせる。 */
+  width: min(100%, var(--board-max));
+  justify-self: center;
+}
+
+@media (min-width: 60rem) {
+  .game {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    grid-template-rows: auto 1fr;
+    column-gap: 1.6rem;
+    padding-top: 1.2rem;
+  }
+
+  .game-board {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: start;
+  }
+
+  .game-status {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .game-panel {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
+.game-status {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.players {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+@media (min-width: 60rem) {
+  .players {
+    grid-template-columns: 1fr;
+  }
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+}
+
+.player-to-move {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.player-text {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  line-height: 1.35;
+}
+
+.player-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-sub {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 59.99rem) {
+  /* 狭い画面では、バッジを枠の右上に重ねて名前の幅を確保する。 */
+  .player {
+    position: relative;
+    padding: 0.45rem 0.55rem;
+  }
+
+  .player .badge {
+    position: absolute;
+    top: -0.6rem;
+    right: 0.5rem;
+    background: var(--bg-elevated);
+  }
+
+  .player .badge-turn {
+    background: var(--accent);
+  }
+
+  .player-komi {
+    display: none;
+  }
+}
+
+.headline-main {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.headline-sub {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pass-banner {
+  margin-top: 0.4rem;
+  padding: 0.45rem 0.7rem;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.88rem;
+}
+
+.game-panel {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.actions .button {
+  flex: 1 1 5.5rem;
+}
+
+.spectator-note {
+  color: var(--ink-soft);
+}
+
+.rule-note {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-sunken);
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.share {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.9rem 1rem 1rem;
+}
+
+.copy-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.copy-row input {
+  min-width: 0;
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.copy-row .button {
+  flex: none;
+  min-width: 6.6rem;
+}
+
+.game-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.4rem;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.game-info div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.game-info dt {
+  font-weight: 600;
+}
+
+.game-info dd {
+  margin: 0;
+}
+
+/* 結果と計算の内訳 */
+
+.result {
+  display: grid;
+  gap: 0.7rem;
+  border-color: var(--accent);
+}
+
+.result-title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.7rem;
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.result-code {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+}
+
+.result-note {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+
+.score-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-table caption {
+  margin-bottom: 0.3rem;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.score-table th,
+.score-table td {
+  padding: 0.3rem 0.4rem;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+}
+
+.score-table thead th {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.score-table tbody th {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.score-total {
+  font-weight: 800;
+}
+
+.score-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-right: 0.25rem;
+  border-radius: 2px;
+  vertical-align: -0.1em;
+  /* 盤の色の上に、盤上と同じ色を重ねて見せる。 */
+  background-color: #dfb163;
+}
+
+.legend-black {
+  box-shadow: inset 0 0 0 1rem rgba(12, 12, 14, 0.5);
+}
+
+.legend-white {
+  box-shadow:
+    inset 0 0 0 1rem rgba(255, 255, 255, 0.66),
+    0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+/* 通知(不正手の理由、再接続) */
+
+.toasts {
+  position: absolute;
+  left: 50%;
+  bottom: 2.6rem;
+  z-index: 3;
+  display: grid;
+  gap: 0.4rem;
+  width: max-content;
+  max-width: calc(100% - 1.5rem);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.toast {
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  background: rgba(28, 24, 18, 0.93);
+  color: #fbf7ee;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+  animation: toast-in 0.18s ease-out;
+}
+
+.toast-error {
+  background: rgba(132, 27, 20, 0.96);
+  cursor: pointer;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* ───────────── 碁盤 ─────────────
+   ここから下の色は固定。ライト / ダークで変えない。 */
+
+.board-wrap {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.board {
+  position: relative;
+  aspect-ratio: 1;
+  /* 下側に厚みを付けるぶん、少しだけ余白を取る。 */
+  margin-bottom: 10px;
+  border-radius: 7px;
+  box-shadow: var(--board-shadow);
+  background: #dfb163;
+  overflow: hidden;
+  isolation: isolate;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.board::after {
+  /* 面取りの光と影。 */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 240, 200, 0.75),
+    inset 1.5px 0 0 rgba(255, 240, 200, 0.35),
+    inset 0 -2px 0 rgba(90, 55, 12, 0.35),
+    inset -1.5px 0 0 rgba(90, 55, 12, 0.22);
+  pointer-events: none;
+}
+
+.board-wood,
+.board-main {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.board-interactive .board-main {
+  cursor: pointer;
+}
+
+.board-line {
+  fill: none;
+  stroke: #2b1e0c;
+  stroke-opacity: 0.86;
+  stroke-width: 1.1px;
+  vector-effect: non-scaling-stroke;
+  shape-rendering: geometricPrecision;
+}
+
+.board-frame {
+  stroke-width: 1.9px;
+}
+
+.board-star {
+  fill: #2b1e0c;
+  fill-opacity: 0.9;
+}
+
+.board-label {
+  fill: #4b3310;
+  fill-opacity: 0.78;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.stone-fresh {
+  animation: stone-in 0.16s ease-out;
+}
+
+.stone-ghost {
+  pointer-events: none;
+}
+
+@keyframes stone-in {
+  from {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+
+.last-move {
+  fill: none;
+  stroke-width: 5.5;
+  pointer-events: none;
+}
+
+.last-move.on-black {
+  stroke: #f5f1e7;
+}
+
+.last-move.on-white {
+  stroke: #1c1c1e;
+}
+
+.territory {
+  animation: territory-in 0.5s ease-out;
+}
+
+.territory-black .territory-area {
+  fill: rgba(12, 12, 14, 0.3);
+}
+
+.territory-black .territory-mark {
+  fill: #141416;
+}
+
+.territory-white .territory-area {
+  fill: rgba(255, 255, 255, 0.46);
+}
+
+.territory-white .territory-mark {
+  fill: #fbfaf5;
+  stroke: rgba(0, 0, 0, 0.4);
+  stroke-width: 1.5;
+}
+
+@keyframes territory-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.tap-hint {
+  min-height: 1.4em;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  text-align: center;
+  opacity: 0;
+}
+
+.tap-hint-visible {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
