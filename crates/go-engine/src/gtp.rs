@@ -5,6 +5,7 @@
 
 use go_core::{Color, Game, Move};
 
+use crate::mcts::{self, MctsConfig};
 use crate::random::random_move;
 use crate::rng::Rng;
 
@@ -37,6 +38,8 @@ pub const COMMANDS: &[&str] = &[
 pub enum Mode {
     /// 段階 1:自分の眼を埋めないランダム選択。
     Random,
+    /// 段階 2:MCTS(UCT)。
+    Mcts,
 }
 
 #[derive(Clone, Debug)]
@@ -44,11 +47,22 @@ pub struct Config {
     pub mode: Mode,
     /// 乱数のシード。`None` なら時刻から決める。
     pub seed: Option<u64>,
+    /// MCTS の設定(`mode` が `Mcts` のときに使う)。
+    pub mcts: MctsConfig,
+    /// 思考の経過(プレイアウト数と勝率)を標準エラー出力に書く。
+    pub verbose: bool,
 }
 
 impl Default for Config {
     fn default() -> Config {
-        Config { mode: Mode::Random, seed: None }
+        Config { mode: Mode::Mcts, seed: None, mcts: MctsConfig::default(), verbose: false }
+    }
+}
+
+impl Config {
+    /// 段階 1(ランダム選択)の設定。
+    pub fn random(seed: Option<u64>) -> Config {
+        Config { mode: Mode::Random, seed, ..Config::default() }
     }
 }
 
@@ -201,6 +215,18 @@ impl Engine {
     fn choose_move(&mut self, color: Color) -> Move {
         match self.config.mode {
             Mode::Random => random_move(&self.game, color, &mut self.rng),
+            Mode::Mcts => {
+                let result = mcts::search(&self.game, color, &self.config.mcts, &mut self.rng);
+                if self.config.verbose {
+                    eprintln!(
+                        "genmove {color}: {} playouts={} winrate={:.3}",
+                        result.mv.to_gtp(self.game.size()),
+                        result.playouts,
+                        result.winrate
+                    );
+                }
+                result.mv
+            }
         }
     }
 }
@@ -211,7 +237,7 @@ mod tests {
     use go_core::{Cell, Coord};
 
     fn engine() -> Engine {
-        Engine::new(Config { mode: Mode::Random, seed: Some(1) })
+        Engine::new(Config::random(Some(1)))
     }
 
     fn send(engine: &mut Engine, line: &str) -> String {
@@ -357,6 +383,24 @@ mod tests {
         let score = send(&mut e, "final_score");
         assert!(score.starts_with("= B+") || score.starts_with("= W+"), "{score}");
         assert_eq!(score.trim_start_matches("= ").trim(), referee.result_by_score().to_string());
+    }
+
+    #[test]
+    fn genmove_with_mcts_returns_legal_moves() {
+        let mut config = Config { seed: Some(3), ..Config::default() };
+        assert_eq!(config.mode, Mode::Mcts);
+        config.mcts = MctsConfig { playouts: Some(200), time: None, ..MctsConfig::default() };
+        let mut e = Engine::new(config);
+        send(&mut e, "boardsize 5");
+        let mut referee = Game::new(5, 7.5).unwrap();
+        let mut color = Color::Black;
+        while !referee.is_over() && referee.move_number() < 200 {
+            let reply = send(&mut e, &format!("genmove {color}"));
+            let mv = Move::from_gtp(reply.strip_prefix("= ").unwrap().trim(), 5).expect("vertex or pass");
+            referee.play_as(color, mv).expect("engine move must be legal");
+            color = color.opponent();
+        }
+        assert!(referee.is_over(), "the game should end by two passes");
     }
 
     #[test]

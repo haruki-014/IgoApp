@@ -327,8 +327,8 @@ async fn serve_connection(
     thinking: Arc<AtomicUsize>,
     max_thinking: Arc<AtomicUsize>,
 ) {
-    use go_engine::gtp::{Config, Engine, Mode};
-    let mut engine = Engine::new(Config { mode: Mode::Random, seed: Some(number as u64) });
+    use go_engine::gtp::{Config, Engine};
+    let mut engine = Engine::new(Config::random(Some(number as u64)));
     let (reader, mut writer) = stream.into_split();
     let mut lines = BufReader::new(reader).lines();
     while let Ok(Some(line)) = lines.next_line().await {

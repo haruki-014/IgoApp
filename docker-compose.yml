@@ -1,0 +1,105 @@
+# 囲碁対戦アプリ。`docker compose up` で全体が起動する。
+# 起動後、ブラウザで http://localhost:8080 を開く(ポートは IGO_PORT で変更できる)。
+
+name: igo
+
+services:
+  db:
+    image: postgres:17.11-alpine
+    environment:
+      POSTGRES_USER: igo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-igo}
+      POSTGRES_DB: igo
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U igo -d igo"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  server:
+    build:
+      context: .
+      dockerfile: docker/rust.Dockerfile
+      target: server
+    environment:
+      DATABASE_URL: postgres://igo:${POSTGRES_PASSWORD:-igo}@db:5432/igo
+      BIND_ADDR: 0.0.0.0:8080
+      # 思考エンジンの一覧。エンジンの追加・差し替えは、ここと下のサービス定義だけで行える。
+      #   name            対局作成時に指定する名前(英小文字・数字・-・_)
+      #   label           画面に表示する名前
+      #   host / port     GTP を TCP で話す相手
+      #   max_concurrent  そのエンジンが同時に思考できる数
+      #   max_board_size  対応する最大の盤サイズ
+      ENGINES: |
+        [
+          {"name": "self", "label": "自作エンジン(MCTS)", "host": "engine-self", "port": 7001,
+           "max_concurrent": 2, "max_board_size": 25},
+          {"name": "random", "label": "自作エンジン(ランダム)", "host": "engine-random", "port": 7001,
+           "max_concurrent": 4, "max_board_size": 25},
+          {"name": "katago", "label": "KataGo", "host": "engine-katago", "port": 7002,
+           "max_concurrent": 1, "max_board_size": 19}
+        ]
+      # 全エンジン合計で、同時に思考させる数の上限。
+      AI_MAX_CONCURRENT: ${AI_MAX_CONCURRENT:-2}
+      # GTP コマンド 1 つの応答を待つ秒数。超えたらエンジン側の投了として扱う。
+      AI_MOVE_TIMEOUT_SECS: ${AI_MOVE_TIMEOUT_SECS:-60}
+      RUST_LOG: ${RUST_LOG:-info}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 自作エンジン(MCTS)。TCP 接続ごとに go-engine を 1 プロセス起動する(socat)。
+  engine-self:
+    build:
+      context: .
+      dockerfile: docker/rust.Dockerfile
+      target: engine-self
+    environment:
+      GTP_PORT: "7001"
+      # 1 手あたりの思考時間(ミリ秒)は --time-ms で変えられる。
+      ENGINE_COMMAND: go-engine --mode mcts --time-ms ${SELF_TIME_MS:-2000}
+    restart: unless-stopped
+
+  # 自作エンジンのランダム版。同じイメージを起動引数だけ変えて使う
+  # (エンジンの追加が compose の設定だけでできることの例でもある)。
+  engine-random:
+    build:
+      context: .
+      dockerfile: docker/rust.Dockerfile
+      target: engine-self
+    environment:
+      GTP_PORT: "7001"
+      ENGINE_COMMAND: go-engine --mode random
+    restart: unless-stopped
+
+  # KataGo の CPU 版(Eigen)。engine-self と同じ方式で GTP を TCP で公開する。
+  engine-katago:
+    build:
+      context: .
+      dockerfile: docker/katago/Dockerfile
+    environment:
+      GTP_PORT: "7002"
+      # 同時に抱える接続(= KataGo のプロセス)の上限。
+      GTP_MAX_CONNECTIONS: "4"
+      # 思考量。9 路盤で 1 手数秒程度に収まるようにしてある。
+      KATAGO_MAX_VISITS: ${KATAGO_MAX_VISITS:-400}
+      KATAGO_MAX_TIME: ${KATAGO_MAX_TIME:-3.0}
+      KATAGO_THREADS: ${KATAGO_THREADS:-4}
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    ports:
+      - "${IGO_PORT:-8080}:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  db-data:

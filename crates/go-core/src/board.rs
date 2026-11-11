@@ -209,6 +209,35 @@ impl Board {
         liberties
     }
 
+    /// `start` の石が属する連に、呼吸点が 1 つでもあるか。
+    ///
+    /// 着手のたびに呼ぶので、連全体は集めず、呼吸点が見つかった時点で打ち切る
+    /// (ヒープも使わない)。結果は `collect_group(..) > 0` と同じ。
+    fn has_liberty(&self, start: usize) -> bool {
+        let own = self.cells[start];
+        debug_assert!(own.color().is_some());
+        let mut marks = Marks::new();
+        marks.insert(start);
+        let mut stack = [0u16; MAX_SIZE * MAX_SIZE];
+        stack[0] = start as u16;
+        let mut len = 1;
+        while len > 0 {
+            len -= 1;
+            let p = stack[len] as usize;
+            for n in self.neighbors(p) {
+                let cell = self.cells[n];
+                if cell == Cell::Empty {
+                    return true;
+                }
+                if cell == own && marks.insert(n) {
+                    stack[len] = n as u16;
+                    len += 1;
+                }
+            }
+        }
+        false
+    }
+
     #[inline]
     fn toggle_hash(&mut self, index: usize, color: Color) {
         let (x, y) = (index % self.width - 1, index / self.width - 1);
@@ -252,7 +281,8 @@ impl Board {
         let mut group = Vec::new();
         for n in self.neighbors(index) {
             // 先に取り除いた連に属していた点は、すでに空点になっている。
-            if self.cells[n] == opponent && self.collect_group(n, &mut group) == 0 {
+            if self.cells[n] == opponent && !self.has_liberty(n) {
+                self.collect_group(n, &mut group);
                 for &stone in &group {
                     self.take(stone);
                 }
@@ -261,7 +291,7 @@ impl Board {
         }
 
         // 石を取ったなら、取った跡が自分の連の呼吸点になるので自殺手にはならない。
-        if captured.is_empty() && self.collect_group(index, &mut group) == 0 {
+        if captured.is_empty() && !self.has_liberty(index) {
             self.take(index);
             return Err(MoveError::Suicide);
         }
